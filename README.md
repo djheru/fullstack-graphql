@@ -70,3 +70,72 @@ query ChannelsListQuery {
 
 ### Install Apollo Client
 - `yarn add react-apollo`
+- Allows you to use a higher-order component to handle data
+- Add the client to App.js
+```javascript
+import {
+  ApolloClient,
+  gql,
+  graphql,
+  ApolloProvider,
+} from 'react-apollo';
+const client = new ApolloClient();
+```
+- Wrap the ChannelsList component with gql
+// We define the query and pass it to the HOC
+```javascript
+const channelsListQuery = gql`
+  query ChannelsListQuery {
+    channels {
+      id
+      name
+    }
+  }
+`;
+
+// Wrapping the component allows it to receive this additional data
+const ChannelsList = ({data: {loading, error, channels}}) => {
+  if (loading) {
+    return (<p>Loading ...</p>);
+  }
+  if (error) {
+    return (<p>{error.message}</p>);
+  }
+  return (
+    <ul className="Item-list">
+      { channels.map(ch => (<li key={ch.id}>{ch.name}</li>)) }
+    </ul>
+  )
+};
+
+// We wrap the ChannelsList in the functtion that's
+// returned by graphql(channelsListQuery)
+const ChannelsListWithData = graphql(channelsListQuery)(ChannelsList);
+
+class App extends Component {
+  render() {
+    // We wrap the markup in the <ApolloProvider/> component and pass  
+    // it the client, which makes the requests to the server
+    return (
+      <ApolloProvider client={client}>
+        <div className="App">
+          <div className="App-header">
+            <img src={logo} className="App-logo" alt="logo" />
+            <h2>Welcome to Apollo</h2>
+          </div>
+          <div className="Channels-container">
+            <ChannelsListWithData/>
+          </div>
+        </div>
+      </ApolloProvider>
+    );
+  }
+}
+
+export default App;
+```
+- Now we see the error: 
+  - `Network error: Network request failed with status 404 - "Not Found"`
+  - Network request was made to `http://localhost:3000/graphql`
+
+### Create a Mock Endpoint
