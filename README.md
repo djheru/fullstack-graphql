@@ -3,13 +3,13 @@ Full-stack GraphQL tutorials with React, Redux and Apollo
 
 # 1. The Frontend
 
-#### Bootstrap the client with create-react-app
+### Bootstrap the client with create-react-app
 - Create a new react app in `./client`
   - `create-react-app client && cd ./client`
 - Start the server
   - `npm start`
 
-#### Writing the first component
+### Writing the first component
 - Copy the assets
   - `cp ../resources/* src`
 - Modify the App component
@@ -41,3 +41,32 @@ class App extends Component {
 
 export default App;
 ```
+
+### Creating a Schema
+- `touch ./src/schema.js`
+```javascript
+export const typeDefs = `
+type Channel {
+  id: ID!, # "!" denotes required fields
+  name: String
+}
+
+# the "Query" type specifies the API of the graphql interface. 
+# Here you expose the data that clients can query
+type Query {
+  channels: [Channel] # A list of channels
+}
+`;
+```
+- This gives us a query like
+```
+query ChannelsListQuery {
+  channels {
+    id
+    name
+  }
+}
+```
+
+### Install Apollo Client
+- `yarn add react-apollo`
