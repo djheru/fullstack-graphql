@@ -1,25 +1,9 @@
-# graphql-tutorial
-Full-stack GraphQL tutorials with React, Redux and Apollo
-
-# 1. The Frontend
-
-#### Bootstrap the client with create-react-app
-- Create a new react app in `./client`
-  - `create-react-app client && cd ./client`
-- Start the server
-  - `npm start`
-
-#### Writing the first component
-- Copy the assets
-  - `cp ../resources/* src`
-- Modify the App component
-```javascript
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
 
 const ChannelsList = () => (
-  <ul>
+  <ul className="Item-list">
     <li>channel 1</li>
     <li>channel 2</li>
   </ul>
@@ -33,11 +17,12 @@ class App extends Component {
           <img src={logo} className="App-logo" alt="logo" />
           <h2>Welcome to Apollo</h2>
         </div>
-        <ChannelsList/>
+        <div className="Channels-container">
+          <ChannelsList/>
+        </div>
       </div>
     );
   }
 }
 
 export default App;
-```
