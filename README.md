@@ -159,3 +159,46 @@ const client = new ApolloClient({networkInterface});
 ```
 - More information about mocking GQL
   - http://dev.apollodata.com/tools/graphql-tools/mocking.html
+
+# 2. The Backend
+
+### Initial Setup
+- Make a directory `server` in the same directory as the `client` 
+  - `cd ../ && mkdir server && cd $_`
+- Create a basic server
+```javascript
+import express from 'express';
+
+const PORT = 4000;
+
+const server = express();
+
+server.get('/', function (req, res) {
+  res.send('Hello World!');
+});
+
+server.listen(PORT, () => 
+  console.log(`GraphQL Server is now running on http://localhost:${PORT}`));
+```
+
+### Add the Schema
+- `cp ../client/src/schema.js ./src/schema.js`
+```javascript
+import {addMockFunctionsToSchema, makeExecutableSchema} from 'graphql-tools';
+
+const typeDefs = `
+type Channel {
+  id: ID!, # "!" denotes required fields
+  name: String
+}
+
+# the "Query" type specifies the API of the graphql interface. 
+# Here you expose the data that clients can query
+type Query {
+  channels: [Channel] # A list of channels
+}
+`;
+const schema = makeExecutableSchema({ typeDefs });
+export { schema };
+
+```
