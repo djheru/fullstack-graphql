@@ -202,3 +202,21 @@ const schema = makeExecutableSchema({ typeDefs });
 export { schema };
 
 ```
+
+### Wire up the server
+- `yarn add graphql-server-express body-parser graphql`
+```javascript
+import express from 'express';
+import {graphiqlExpress, graphqlExpress} from 'graphql-server-express';
+import bodyParser from 'body-parser';
+import {schema} from './src/schema'
+const PORT = 4000;
+
+const server = express();
+
+server.use('/graphql', bodyParser.json(), graphqlExpress({ schema }));
+server.use('/graphiql', graphiqlExpress({ endpointURL: '/graphql' }));
+
+server.listen(PORT, () =>
+  console.log(`GraphQL Server is now running on http://localhost:${PORT}`));
+```
