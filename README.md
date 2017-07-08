@@ -168,15 +168,11 @@ const client = new ApolloClient({networkInterface});
 - Create a basic server
 ```javascript
 import express from 'express';
-
 const PORT = 4000;
-
 const server = express();
-
 server.get('/', function (req, res) {
   res.send('Hello World!');
 });
-
 server.listen(PORT, () => 
   console.log(`GraphQL Server is now running on http://localhost:${PORT}`));
 ```
@@ -185,38 +181,56 @@ server.listen(PORT, () =>
 - `cp ../client/src/schema.js ./src/schema.js`
 ```javascript
 import {addMockFunctionsToSchema, makeExecutableSchema} from 'graphql-tools';
-
+import { resolvers } from './resolvers';
 const typeDefs = `
 type Channel {
   id: ID!, # "!" denotes required fields
   name: String
 }
-
 # the "Query" type specifies the API of the graphql interface. 
 # Here you expose the data that clients can query
 type Query {
   channels: [Channel] # A list of channels
 }
 `;
-const schema = makeExecutableSchema({ typeDefs });
+const schema = makeExecutableSchema({ typeDefs, resolvers });
+// use this to mock the resolvers
+// addMockFunctionsToSchema({ schema });
 export { schema };
+```
 
+### Add a Resolver with Mock Data
+- `touch ./src/resolvers.js`
+```javascript
+// it fake
+const channels = [ {
+  id: 1,
+  name: 'soccer',
+}, {
+  id: 2,
+  name: 'baseball',
+} ];
+export const resolvers = {
+  Query: {
+    channels: () => {
+      return channels;
+    },
+  },
+};
 ```
 
 ### Wire up the server
 - `yarn add graphql-server-express body-parser graphql`
 ```javascript
+// server.js
 import express from 'express';
 import {graphiqlExpress, graphqlExpress} from 'graphql-server-express';
 import bodyParser from 'body-parser';
 import {schema} from './src/schema'
 const PORT = 4000;
-
 const server = express();
-
 server.use('/graphql', bodyParser.json(), graphqlExpress({ schema }));
 server.use('/graphiql', graphiqlExpress({ endpointURL: '/graphql' }));
-
 server.listen(PORT, () =>
   console.log(`GraphQL Server is now running on http://localhost:${PORT}`));
 ```
