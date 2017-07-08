@@ -234,3 +234,16 @@ server.use('/graphiql', graphiqlExpress({ endpointURL: '/graphql' }));
 server.listen(PORT, () =>
   console.log(`GraphQL Server is now running on http://localhost:${PORT}`));
 ```
+
+# 3. Implement Mutations
+
+### Add CORS to the Server
+  - `cd ../server && yarn add cors`
+- Use CORS middleware in server
+```javascript
+// Add before the routes for graphql/graphiql
+server.use('*', cors({origin: 'http://localhost:3000'}));
+```
+
+### Add a Real Network Interface to the Frontend
+- 
