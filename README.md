@@ -139,3 +139,23 @@ export default App;
   - Network request was made to `http://localhost:3000/graphql`
 
 ### Create a Mock Endpoint
+- Install stuff we need
+  - `yarn add graphql-tools apollo-test-utils graphql`
+- Create a mock network interface for the apollo client
+```javascript
+import React, { Component } from 'react';
+import { ApolloClient, gql, graphql, ApolloProvider } from 'react-apollo';
+import { makeExecutableSchema, addMockFunctionsToSchema } from 'graphql-tools';
+import { mockNetworkInterfaceWithSchema } from 'apollo-test-utils';
+import { typeDefs } from './schema';
+import logo from './logo.svg';
+import './App.css';
+
+const schema = makeExecutableSchema({ typeDefs });
+addMockFunctionsToSchema({ schema });
+const networkInterface = mockNetworkInterfaceWithSchema({ schema });
+const client = new ApolloClient({networkInterface});
+
+```
+- More information about mocking GQL
+  - http://dev.apollodata.com/tools/graphql-tools/mocking.html
