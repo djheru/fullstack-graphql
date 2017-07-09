@@ -1,14 +1,14 @@
 import React, { Component } from 'react';
-import { ApolloClient, gql, graphql, ApolloProvider } from 'react-apollo';
-import { makeExecutableSchema, addMockFunctionsToSchema } from 'graphql-tools';
-import { mockNetworkInterfaceWithSchema } from 'apollo-test-utils';
+import { ApolloClient, gql, graphql, ApolloProvider, createNetworkInterface } from 'react-apollo';
+import { makeExecutableSchema } from 'graphql-tools';
 import { typeDefs } from './schema';
 import logo from './logo.svg';
 import './App.css';
 
-const schema = makeExecutableSchema({ typeDefs });
-addMockFunctionsToSchema({ schema });
-const networkInterface = mockNetworkInterfaceWithSchema({ schema });
+//const schema = makeExecutableSchema({ typeDefs });
+const networkInterface = createNetworkInterface({
+  uri: 'http://localhost:4000/graphql',
+});
 const client = new ApolloClient({networkInterface});
 
 const channelsListQuery = gql`

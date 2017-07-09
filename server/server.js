@@ -3,6 +3,7 @@ import {graphiqlExpress, graphqlExpress} from 'graphql-server-express';
 import bodyParser from 'body-parser';
 import {schema} from './src/schema'
 const PORT = 4000;
+import cors from 'cors';
 
 const server = express();
 

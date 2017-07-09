@@ -246,4 +246,19 @@ server.use('*', cors({origin: 'http://localhost:3000'}));
 ```
 
 ### Add a Real Network Interface to the Frontend
-- 
+- Replace the `mockNetworkInterface`
+  - before: `import { ApolloClient, gql, graphql, ApolloProvider } from 'react-apollo';`
+  - after: `import { ApolloClient, ApolloProvider, createNetworkInterface } from 'react-apollo';`
+  - before: `import { makeExecutableSchema, addMockFunctionsToSchema } from 'graphql-tools';`
+  - after: `import { makeExecutableSchema } from 'graphql-tools';`
+```javascript
+// remove the mockNetworkInterface stuff
+// import { mockNetworkInterfaceWithSchema } from 'apollo-test-utils';
+const schema = makeExecutableSchema({ typeDefs });
+// addMockFunctionsToSchema({ schema });
+// const networkInterface = mockNetworkInterfaceWithSchema({ schema });
+const networkInterface = createNetworkInterface({ 
+  uri: 'http://localhost:4000/graphql',
+});
+const client = new ApolloClient({networkInterface});
+```
