@@ -312,5 +312,9 @@ export const resolvers = {
       }
   }
 };
+```
+### Calling the Mutation from the Client
+- `mkdir ../client/src/components && touch ../client/src/components/AddChannel.js`
+```javascript
 
 ```

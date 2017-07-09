@@ -4,6 +4,7 @@ import { makeExecutableSchema } from 'graphql-tools';
 import { typeDefs } from './schema';
 import logo from './logo.svg';
 import './App.css';
+import AddChannel from './components/AddChannel';
 
 //const schema = makeExecutableSchema({ typeDefs });
 const networkInterface = createNetworkInterface({
@@ -46,6 +47,7 @@ class App extends Component {
             <h2>Welcome to Apollo</h2>
           </div>
           <div className="Channels-container">
+            <AddChannel/>
             <ChannelsListWithData/>
           </div>
         </div>
