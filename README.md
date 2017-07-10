@@ -359,3 +359,29 @@ export default AddChannelWithMutation;
   - `readFragment`
   - `writeFragment`
 - The `mutate` param passed to the component from the HOC contains `update` property
+- You can assign a function to the `mutate.update` property to get the data from the store and append 
+  mutation data to it
+```javascript
+  const handleKeyUp = (e) => {
+    if (e.keyCode === 13) {
+      console.log(e.target.value);
+      e.persist();
+      mutate({
+        variables: {name: e.target.value},
+        // refetchQueries: [ { query: channelsListQuery }] // Re-run query after the mutation
+        update: (store, {data: {addChannel}}) => {
+          // Read the data from the cache for this query
+          const data = store.readQuery({query: channelsListQuery});
+          // Add our channel from the mutation to the end of the list
+          data.channels.push(addChannel);
+          // Update the cache with the new data
+          store.writeQuery({query: channelsListQuery, data});
+        }
+      })
+        .then(res => {
+          e.target.value = '';
+        });
+    }
+  };
+```
+### Add the `optimisticResponse` Property to the Mutate Call

@@ -11,7 +11,17 @@ const AddChannel = ({mutate}) => {
 
       mutate({
         variables: {name: e.target.value},
-        refetchQueries: [ { query: channelsListQuery }] // Re-runs the query after the mutation
+        // refetchQueries: [ { query: channelsListQuery }] // Re-runs the query after the mutation
+        update: (store, {data: {addChannel}}) => {
+          // Read the data from the cache for this query
+          const data = store.readQuery({query: channelsListQuery});
+
+          // Add our channel from the mutation to the end of the list
+          data.channels.push(addChannel);
+
+          // Update the cache with the new data
+          store.writeQuery({query: channelsListQuery, data});
+        }
       })
         .then(res => {
           e.target.value = '';
