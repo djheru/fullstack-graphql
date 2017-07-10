@@ -347,3 +347,15 @@ mutation addChannel($name: String!) {
 const AddChannelWithMutation = graphql(addChannelMutation)(AddChannel);
 export default AddChannelWithMutation;
 ```
+# 4. Optimistic UI Updates
+
+### Add an Artificical Delay
+- `networkInterface.use([{applyMiddleware(req, next) { setTimeout(next, 1000)}}]);`
+
+### Store Returned Mutation Data in the Store
+- Apollo provides tools to perform store updates
+  - `readQuery`
+  - `writeQuery`
+  - `readFragment`
+  - `writeFragment`
+- The `mutate` param passed to the component from the HOC contains `update` property
