@@ -384,4 +384,49 @@ export default AddChannelWithMutation;
     }
   };
 ```
+
 ### Add the `optimisticResponse` Property to the Mutate Call
+
+- `optimisticResponse` represents the expected server response
+```javascript
+mutate({
+        variables: {name: e.target.value},
+        optimisticResponse: {
+          addChannel: {
+            name: e.target.value,
+            id: `${uuid()}-pending`, // Identify pending items for css changes
+            __typename: 'Channel'
+          }
+        },
+        update: (store, {data: {addChannel}}) => {
+          // Read the data from the cache for this query
+          const data = store.readQuery({query: channelsListQuery});
+          // Add our channel from the mutation to the end of the list
+          data.channels.push(addChannel);
+          // Update the cache with the new data
+          store.writeQuery({query: channelsListQuery, data})
+        }
+      })
+        .then(res => {
+          e.target.value = '';
+        });
+```
+
+### Add Some CSS for Pending Items
+```javascript
+const itemClassFcn = (ch) => (ch.id.indexOf('-pending') < 0) ? 'channel' : 'channel pending';
+  return (
+    <div className="channelsList">
+      <AddChannel />
+      { channels.map( ch =>
+        (<div key={ch.id} className={itemClassFcn(ch)}>{ch.name}</div>)
+      )}
+    </div>
+  );
+```
+
+```css
+div.pending {
+    color: rgba(255, 255, 255, 0.5);
+}
+```

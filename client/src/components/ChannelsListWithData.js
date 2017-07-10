@@ -14,11 +14,13 @@ const ChannelsList = ({ data: {loading, error, channels }}) => {
     return <p>{error.message}</p>;
   }
 
+  const itemClassFcn = (ch) => (ch.id.indexOf('-pending') < 0) ? 'channel' : 'channel pending';
+
   return (
     <div className="channelsList">
       <AddChannel />
       { channels.map( ch =>
-        (<div key={ch.id} className="channel">{ch.name}</div>)
+        (<div key={ch.id} className={itemClassFcn(ch)}>{ch.name}</div>)
       )}
     </div>
   );

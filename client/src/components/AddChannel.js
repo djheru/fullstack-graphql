@@ -1,7 +1,7 @@
 import React from 'react';
 import { gql, graphql } from 'react-apollo';
 import {channelsListQuery} from './ChannelsListWithData';
-
+import uuid from 'uuid/v1';
 
 const AddChannel = ({mutate}) => {
   const handleKeyUp = (e) => {
@@ -11,7 +11,13 @@ const AddChannel = ({mutate}) => {
 
       mutate({
         variables: {name: e.target.value},
-        // refetchQueries: [ { query: channelsListQuery }] // Re-runs the query after the mutation
+        optimisticResponse: {
+          addChannel: {
+            name: e.target.value,
+            id: `${uuid()}-pending`, // Identify pending items for css changes
+            __typename: 'Channel'
+          }
+        },
         update: (store, {data: {addChannel}}) => {
           // Read the data from the cache for this query
           const data = store.readQuery({query: channelsListQuery});
@@ -20,7 +26,7 @@ const AddChannel = ({mutate}) => {
           data.channels.push(addChannel);
 
           // Update the cache with the new data
-          store.writeQuery({query: channelsListQuery, data});
+          store.writeQuery({query: channelsListQuery, data})
         }
       })
         .then(res => {
