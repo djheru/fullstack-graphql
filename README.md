@@ -433,3 +433,100 @@ div.pending {
 
 # 5. Input Types and Field Arguments
 
+### Add the Channel Messages to the Server Schema
+- Create a `Message` type
+- Add the messages as a child of the `Channel` type
+- Provide a way to fetch a single channel 
+  - by adding a `channel` field to the root `Query` type
+```javascript
+const typeDefs = `
+type Channel {
+  id: ID!, # "!" denotes required fields
+  name: String
+  messages: [Message] # Add the messages to the channel
+}
+type Message {
+  id: ID!
+  text: String
+}
+# the "Query" type specifies the API of the graphql interface. 
+# Here you expose the data that clients can query
+type Query {
+  channels: [Channel] # A list of channels
+  channel(id: ID!): Channel # add the single channel query
+}
+# The mutation root type, used to define all mutations.
+type Mutation {
+  # A mutation to add a new channel to the list of channels
+  addChannel(name: String!): Channel
+}
+`;
+```
+- Add a function to the resolver to get the data
+```javascript
+// add the channel resolver
+export const resolvers = {
+  Query: {
+    channels: () => {
+      return channels;
+    },
+    channel: (id) => channels.find(ch => ch.id === id)
+  },
+  Mutation: {
+    addChannel: (root, args) => {
+      const newChannel = { id: `${nextId++}`, name: args.name, messages: [] };
+      channels.push(newChannel);
+      return newChannel;
+    }
+  }
+};
+```
+
+### Add the Query to the Client
+```javascript
+import React from 'react';
+import MessageList from './MessageList';
+// import ChannelPreview from './ChannelPreview';
+import NotFound from './NotFound';
+import {
+    gql,
+    graphql,
+} from 'react-apollo';
+const ChannelDetails = (queryData) => {
+  const { data: {loading, error, channel }} = queryData;
+  if (loading) {
+    return <p>Loading ...</p>;
+  }
+  if (error) {
+    return <p>{error.message}</p>;
+  }
+  if (channel === null) {
+    return (<NotFound/>);
+  }
+  return (
+    <div>
+      <div className="channelName">
+        {channel.name}
+      </div>
+      <MessageList messages={channel.messages}/>
+    </div>);
+};
+export const channelDetailsQuery = gql`
+  query ChannelDetailsQuery($channelId: ID!) {
+    channel(id: $channelId) {
+      id
+      name
+      messages {
+        id
+        text
+      }
+    }
+  }
+`;
+export default graphql(channelDetailsQuery, {
+  options: (props) => ({
+    variables: { channelId: props.match.params.channelId}
+  })
+})(ChannelDetails);
+```
+### Setup for Mutation to Add Messages
