@@ -1,7 +1,11 @@
 import React from 'react';
 import {
-  gql,
-  graphql,
+  Link
+} from 'react-router-dom'
+
+import {
+    gql,
+    graphql,
 } from 'react-apollo';
 
 import AddChannel from './AddChannel';
@@ -14,13 +18,15 @@ const ChannelsList = ({ data: {loading, error, channels }}) => {
     return <p>{error.message}</p>;
   }
 
-  const itemClassFcn = (ch) => (ch.id.indexOf('-pending') < 0) ? 'channel' : 'channel pending';
-
   return (
     <div className="channelsList">
       <AddChannel />
       { channels.map( ch =>
-        (<div key={ch.id} className={itemClassFcn(ch)}>{ch.name}</div>)
+        (<div key={ch.id} className={'channel ' + (ch.id < 0 ? 'optimistic' : '')}>
+          <Link to={ch.id < 0 ? `/` : `channel/${ch.id}`}>
+            {ch.name}
+          </Link>
+        </div>)
       )}
     </div>
   );

@@ -1,52 +1,54 @@
 import React from 'react';
 import { gql, graphql } from 'react-apollo';
-import {channelsListQuery} from './ChannelsListWithData';
-import uuid from 'uuid/v1';
 
-const AddChannel = ({mutate}) => {
-  const handleKeyUp = (e) => {
-    if (e.keyCode === 13) {
-      console.log(e.target.value);
-      e.persist();
+import { channelsListQuery } from './ChannelsListWithData';
 
-      mutate({
-        variables: {name: e.target.value},
+const AddChannel = ({ mutate }) => {
+  const handleKeyUp = (evt) => {
+    if (evt.keyCode === 13) {
+      mutate({ 
+        variables: { name: evt.target.value },
         optimisticResponse: {
           addChannel: {
-            name: e.target.value,
-            id: `${uuid()}-pending`, // Identify pending items for css changes
-            __typename: 'Channel'
-          }
+            name: evt.target.value,
+            id: Math.round(Math.random() * -1000000),
+            __typename: 'Channel',
+          },
         },
-        update: (store, {data: {addChannel}}) => {
-          // Read the data from the cache for this query
-          const data = store.readQuery({query: channelsListQuery});
-
-          // Add our channel from the mutation to the end of the list
-          data.channels.push(addChannel);
-
-          // Update the cache with the new data
-          store.writeQuery({query: channelsListQuery, data})
-        }
-      })
-        .then(res => {
-          e.target.value = '';
-        });
+        update: (store, { data: { addChannel } }) => {
+            // Read the data from the cache for this query.
+            const data = store.readQuery({ query: channelsListQuery });
+            // Add our channel from the mutation to the end.
+            data.channels.push(addChannel);
+            // Write the data back to the cache.
+            store.writeQuery({ query: channelsListQuery, data });
+          },
+      });
+      evt.target.value = '';
     }
   };
+
   return (
-    <input type="text" placeholder="new channel" onKeyUp={handleKeyUp} />
+    <input
+      type="text"
+      placeholder="New channel"
+      onKeyUp={handleKeyUp}
+    />
   );
 };
 
 const addChannelMutation = gql`
-mutation addChannel($name: String!) {
-  addChannel(name: $name) {
-    id
-    name
+  mutation addChannel($name: String!) {
+    addChannel(name: $name) {
+      id
+      name
+    }
   }
-}`;
+`;
 
-const AddChannelWithMutation = graphql(addChannelMutation)(AddChannel);
+
+const AddChannelWithMutation = graphql(
+  addChannelMutation,
+)(AddChannel);
 
 export default AddChannelWithMutation;
