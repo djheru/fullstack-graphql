@@ -530,3 +530,36 @@ export default graphql(channelDetailsQuery, {
 })(ChannelDetails);
 ```
 ### Setup for Mutation to Add Messages
+- Create an Input type
+```javascript
+// ../server/schema.js
+const typeDefs = `
+type Channel {
+  ...
+}
+type Message {
+  ...
+}
+# the "Query" type specifies the API of the graphql interface. 
+# Here you expose the data that clients can query
+type Query {
+  ...
+}
+# an object that can only contain basic scalar types, 
+# list types, and other input types
+input MessageInput {
+  channelId: ID!
+  text: String
+}
+# The mutation root type, used to define all mutations.
+type Mutation {
+  # A mutation to add a new channel to the list of channels
+  addChannel(name: String!): Channel
+  addMessage(message: MessageInput!): Message
+}
+`;
+```
+- Add to the resolver
+```javascript
+
+```
