@@ -15,14 +15,14 @@ import {
   ApolloClient,
   ApolloProvider,
   createNetworkInterface,
-  // toIdValue,
+  toIdValue,
 } from 'react-apollo';
 
 
 const networkInterface = createNetworkInterface({ uri: 'http://localhost:4000/graphql' });
 networkInterface.use([{
   applyMiddleware(req, next) {
-    setTimeout(next, 500);
+    setTimeout(next, 5000);
   },
 }]);
 
@@ -37,9 +37,16 @@ function dataIdFromObject (result) {
 
 const client = new ApolloClient({
   networkInterface,
+  customResolvers: {
+    Query: {
+      channel: (_, args) => {
+        // check the cache for the channel by id
+        return toIdValue(dataIdFromObject({ __typename: 'Channel', id: args['id'] }));
+      },
+    },
+  },
   dataIdFromObject,
 });
-
 
 class App extends Component {
   render() {

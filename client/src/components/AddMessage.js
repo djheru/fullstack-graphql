@@ -5,7 +5,6 @@ import { withRouter } from 'react-router';
 
 
 const AddMessage = ({ match, mutate }) => {
-  console.log('match');
   const handleKeyUp = (evt) => {
     if (evt.keyCode === 13) {
       mutate({

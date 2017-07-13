@@ -561,5 +561,103 @@ type Mutation {
 ```
 - Add to the resolver
 ```javascript
-
+// ../server/src/resolvers
+export const resolvers ={
+  // ...
+  addMessage: (root, {message}) => {
+    const channel = channels.find(channel => channel.id === message.channelId);
+    if(!channel)
+      throw new Error("Channel does not exist");
+    const newMessage = { id: String(nextMessageId++), text: message.text };
+    channel.messages.push(newMessage);
+    return newMessage;
+  }
+}
 ```
+
+- Add query to the AddMessage and Wrap Component
+```javascript
+const addMessageMutation = gql`
+  mutation addMessage($message: MessageInput!) {
+    addMessage(message: $message) {
+      id
+      text
+    }
+  }
+`;
+
+const AddMessageWithMutation = graphql(
+  addMessageMutation,
+)(withRouter(AddMessage));
+
+export default AddMessageWithMutation;
+```
+
+- Add call to `mutate()` in the handler function
+```javascript
+const AddMessage = ({ match, mutate }) => {
+  console.log('match');
+  const handleKeyUp = (evt) => {
+    if (evt.keyCode === 13) {
+      mutate({
+        variables: {
+          message: {
+            channelId: match.params.channelId,
+            text: evt.target.value
+          }
+        },
+        optimisticResponse: {
+          addMessage: {
+            text: evt.target.value,
+            id: Math.round(Math.random() * -1000000),
+            __typename: 'Message',
+          },
+        },
+        // custom update function
+        update: (store, { data: { addMessage } }) => {
+          // Read the data from the cache for this query.
+          const data = store.readQuery({
+            query: channelDetailsQuery,
+            variables: {
+              channelId: match.params.channelId,
+            }
+          });
+          // Add our Message from the mutation to the end.
+          data.channel.messages.push(addMessage);
+          // Write the data back to the cache.
+          store.writeQuery({
+            query: channelDetailsQuery,
+            variables: {
+              channelId: match.params.channelId,
+            },
+            data
+          });
+        },
+      });
+      evt.target.value = '';
+    }
+  };
+```
+
+# 6. Reading From the Cache
+
+- Apollo client stores each query result in its normalized cache
+- Uses the query path to determine if an object is cached
+- To use cached data from a different query path, create a custom resolver
+```javascript
+// ../client/src/App.js
+const client = new ApolloClient({
+  networkInterface,
+  customResolvers: {
+    Query: {
+      channel: (_, args) => {
+        console.log(args);
+        // check the cache for the channel by id
+        return toIdValue(dataIdFromObject({ __typename: 'Channel', id: args['id'] }));
+      },
+    },
+  },
+  dataIdFromObject,
+});
+```
+// Now the channel is available from the passed in prop data in `ChannelDetails`
