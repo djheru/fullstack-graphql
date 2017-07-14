@@ -660,4 +660,122 @@ const client = new ApolloClient({
   dataIdFromObject,
 });
 ```
-// Now the channel is available from the passed in prop data in `ChannelDetails`
+- Now the channel is available from the passed in prop data in `ChannelDetails`
+
+# 7.  GraphQL Subscriptions
+
+### Add it to the Server-Side Schema
+- Subscriptions notify the client of new results for previous queries
+- Add the Subscription type at the root level of the schema
+```javascript
+const typeDefs = `
+  // ...
+  # Subscriptions allow clients to be notified of certain topics
+  type Subscription {
+    messageAdded(channelId: ID!): Message
+  }
+`
+```
+
+### Publish Topic for Clients to Subscribe
+- Use `PubSub` from `graphql-subscriptions` 
+  - `import {PubSub, withFilter} from 'graphql-subscriptions';`
+- Create an instance of PubSub
+  - `const pubSub = new PubSub();`;
+- Use the `pubSub.publish` method in the `addMessage` resolver
+```javascript
+
+const pubSub = new PubSub();
+
+export const resolvers = {
+  Query: {
+    channels: () => {
+      return channels;
+    },
+    channel: (root, {id}) => channels.find(ch => ch.id === id)
+  },
+  Mutation: {
+    addChannel: (root, args) => {
+      const newChannel = { id: `${nextId++}`, name: args.name, messages: [] };
+      channels.push(newChannel);
+      return newChannel;
+    },
+    addMessage: (root, {message}) => {
+      const channel = channels.find(channel => channel.id === message.channelId);
+      if(!channel)
+        throw new Error("Channel does not exist");
+      const newMessage = { id: String(nextMessageId++), text: message.text };
+      channel.messages.push(newMessage);
+      // Let subscribers know about it
+      pubSub.publish('messageAdded', {messageAdded: newMessage, channelId: message.channelId});
+      return newMessage;
+    }
+  }
+};
+```
+
+### Resolve Subscription Queries
+- Create a resolver top-level object
+```
+export const resolvers = {
+  Query: {...},
+  Mutation: {...},
+  Subscription: {
+    messageAdded: {
+      subscribe: withFilter(
+        () => pubsub.asyncIterator('messageAdded'), 
+        (payload, variables) => (payload.channelId === variables.channelId)
+      )
+    }
+  }
+```
+- Subscriptions resolvers are not functions
+  - They're objects with subscribe method than returns an AsyncIterable.
+
+#### `withFilter`
+- When publishing data to subscribers, make sure each subscriber gets only the data it wants
+- `withFilter` wraps the `AsyncIterable` with a filter function
+  - `filterFn: (payload, variables, context, info) => boolean | Promise<boolean>`
+    - `payload` - The published value
+    - `variables` - 
+    - `context`
+    - `operationInfo` - 
+    - Returns a boolean or promise of a boolean 
+      - indicates if the payload should pass to the subscriber
+
+### WebSocket Transport for Subscriptions
+- Install the library - `cd ../server && yarn add subscriptions-transport-ws`
+- `import { SubscriptionServer } from 'subscriptions-transport-ws'; // In server.js`
+- Wrap the Express server with `createServer` (from http)
+- Use the wrapped server to set up a WebSocket to listen for GraphQL subscriptions
+```javascript
+import express from 'express';
+import {graphiqlExpress, graphqlExpress} from 'graphql-server-express';
+import { execute, subscribe} from 'graphql';
+import { createServer } from 'http';
+import { SubscriptionServer } from 'subscriptions-transport-ws';
+import bodyParser from 'body-parser';
+import {schema} from './src/schema'
+import cors from 'cors';
+const PORT = 4000;
+const server = express();
+server.use('*', cors({origin: 'http://localhost:3000'}));
+server.use('/graphql', bodyParser.json(), graphqlExpress({ schema }));
+server.use('/graphiql', graphiqlExpress({
+  endpointURL: '/graphql',
+  subscriptionsEndpoint: 'ws://localhost:4000/subscriptions'
+}));
+// wrap the Express server
+const ws = createServer(server);
+ws.listen(PORT, () => {
+  console.log(`GraphQL server running on http://localhost:${PORT}`);
+  // Set up the WebSocket to listen for subscriptions
+  const options = {
+    execute,
+    subscribe,
+    schema
+  };
+  const socketOptions = {server: ws, path: '/subscriptions'};
+  new SubscriptionServer(options, socketOptions);
+});
+```

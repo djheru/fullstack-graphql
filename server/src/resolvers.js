@@ -32,7 +32,7 @@ export const resolvers = {
   },
   Mutation: {
     addChannel: (root, args) => {
-      const newChannel = { id: `${nextId++}`, name: args.name, messages: [] };
+      const newChannel = { id: String(nextId++), name: args.name, messages: [] };
       channels.push(newChannel);
       return newChannel;
     },
@@ -44,19 +44,15 @@ export const resolvers = {
       channel.messages.push(newMessage);
 
       // Let subscribers know about it
-      pubSub.publish('messageAddedd', {messageAdded: newMessage, channelId: message.channelId});
+      pubSub.publish('messageAdded', {messageAdded: newMessage, channelId: message.channelId});
       return newMessage;
     }
   },
   Subscription: {
     messageAdded: {
       subscribe: withFilter(
-        () => pubsub.asyncIterator('messageAdded'),
+        () => pubSub.asyncIterator('messageAdded'),
         (payload, variables, ctx, info) => {
-          console.log('payload', payload);
-          console.log('vars', variables);
-          console.log('ctx', ctx);
-          console.log('info', info);
           return (payload.channelId === variables.channelId);
         }
       )

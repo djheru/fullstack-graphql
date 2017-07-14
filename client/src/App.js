@@ -22,7 +22,7 @@ import {
 const networkInterface = createNetworkInterface({ uri: 'http://localhost:4000/graphql' });
 networkInterface.use([{
   applyMiddleware(req, next) {
-    setTimeout(next, 5000);
+    setTimeout(next, 500);
   },
 }]);
 
