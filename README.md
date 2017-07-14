@@ -662,7 +662,7 @@ const client = new ApolloClient({
 ```
 - Now the channel is available from the passed in prop data in `ChannelDetails`
 
-# 7.  GraphQL Subscriptions
+# 7.  GraphQL Server Subscriptions
 
 ### Add it to the Server-Side Schema
 - Subscriptions notify the client of new results for previous queries
@@ -778,4 +778,135 @@ ws.listen(PORT, () => {
   const socketOptions = {server: ws, path: '/subscriptions'};
   new SubscriptionServer(options, socketOptions);
 });
+```
+- The GraphiQL client has subscription support built in
+- Run the following query
+```
+subscription {
+  messageAdded(channelId: 1) {
+    id
+    text
+  }
+}
+```
+
+# 8. GraphQL Client Subscriptions
+
+### Setup the Client WebSocket
+- Install the client
+  - `yarn add subscriptions-transport-ws`
+- Import it in ../client/src/App.js
+  - `import {SubscriptionClient, addGraphQLSubscriptions} from 'subscriptions-transport-ws';`
+- Construct a subscription client
+```javascript
+const wsClient = new SubscriptionClient(`ws://localhost:4000/subscriptions`, {reconnect: true});
+```
+- Merge the client with our existing network interface
+```javascript
+const networkInterfaceWithSubscriptions = addGraphQlSubscriptions(networkInterface, wsClient);
+```
+- Use the new network interface with Apollo Client
+```javascript
+const networkInterface = createNetworkInterface({ uri: 'http://localhost:4000/graphql' });
+networkInterface.use([{
+  applyMiddleware(req, next) {
+    setTimeout(next, 500);
+  },
+}]);
+const wsClient = new SubscriptionClient(`ws://localhost:4000/subscriptions`, {reconnect: true});
+const networkInterfaceWithSubscriptions = addGraphQlSubscriptions(networkInterface, wsClient);
+function dataIdFromObject (result) {
+  if (result.__typename) {
+    if (result.id !== undefined) {
+      return `${result.__typename}:${result.id}`;
+    }
+  }
+  return null;
+}
+const client = new ApolloClient({
+  networkInterface: networkInterfaceWithSubscriptions,
+  customResolvers: {
+    Query: {
+      channel: (_, args) => {
+        // check the cache for the channel by id
+        return toIdValue(dataIdFromObject({ __typename: 'Channel', id: args['id'] }));
+      },
+    },
+  },
+  dataIdFromObject,
+});
+```
+
+### Refactor the Component that will Subscribe
+- ChannelDetails will be listening for message created events, to display new messages from other clients
+- We'll need to use React lifecycle methods, so refactor to an es6 class
+```javascript
+class ChannelDetails extends Component {
+  render() {
+    const {data: {loading, error, channel}, match} = this.props;
+    if (loading) {
+      return (<ChannelPreview channelId={match.params.channelId}/>);
+    }
+    if (error) {
+      return <p>{error.message}</p>;
+    }
+    if (channel === null) {
+      return (<NotFound/>);
+    }
+    return (
+      <div>
+        <div className="channelName">
+          {channel.name}
+        </div>
+        <MessageList messages={channel.messages}/>
+      </div>);
+  }
+}
+```
+
+- Create the subscription query near the channelDetailsQuery
+```javascript
+export const messagesSubscription = gql`
+  subscription messageAdded($channelId: ID!) {
+    messageAdded(channelId: $channelId) {
+      id
+      text
+    }
+  }
+`;
+```
+
+- Inside `componentWillMount` add the subscription
+```javascript
+componentWillMount() {
+    this.props.data.subscribeToMore({
+      document: messagesSubscription,
+      variables: {
+        channelId: this.props.match.params.channelId
+      },
+      updateQuery: (prev, {subscriptionData}) => {
+        if (!subscriptionData.data) {
+          return prev;
+        }
+        const newMessage = subscriptionData.data.messageAdded;
+        // Don't add multiples of the new message if it's added from this client
+        if (!prev.channel.messages.find(msg => msg.id === newMessage.id)) { // the new message isn't already in the list
+          return Object.assign({}, prev, {
+            channel: Object.assign({}, prev.channel, {messages: [...prev.channel.messages, newMessage]})
+          })
+        } else {
+          return prev;
+        }
+      }
+    });
+  }
+```
+
+- Inside AddMessage, make the same duplicate check as above
+```javascript
+// in the update property of the param object passed to mutate():
+// Add our Message from the mutation to the end.
+if (!data.channel.messages.find(msg => msg.id === addMessage.id)) {
+  data.channel.messages.push(addMessage);
+}
 ```

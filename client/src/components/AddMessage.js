@@ -30,7 +30,9 @@ const AddMessage = ({ match, mutate }) => {
             }
           });
           // Add our Message from the mutation to the end.
-          data.channel.messages.push(addMessage);
+          if (!data.channel.messages.find(msg => msg.id === addMessage.id)) {
+            data.channel.messages.push(addMessage);
+          }
           // Write the data back to the cache.
           store.writeQuery({
             query: channelDetailsQuery,

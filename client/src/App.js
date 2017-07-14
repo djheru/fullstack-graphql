@@ -5,7 +5,7 @@ import {
   Route,
   Switch,
 } from 'react-router-dom';
-
+import {SubscriptionClient, addGraphQLSubscriptions} from 'subscriptions-transport-ws';
 import './App.css';
 import ChannelsListWithData from './components/ChannelsListWithData';
 import NotFound from './components/NotFound';
@@ -26,6 +26,9 @@ networkInterface.use([{
   },
 }]);
 
+const wsClient = new SubscriptionClient(`ws://localhost:4000/subscriptions`, {reconnect: true});
+const networkInterfaceWithSubscriptions = addGraphQLSubscriptions(networkInterface, wsClient);
+
 function dataIdFromObject (result) {
   if (result.__typename) {
     if (result.id !== undefined) {
@@ -36,7 +39,7 @@ function dataIdFromObject (result) {
 }
 
 const client = new ApolloClient({
-  networkInterface,
+  networkInterface: networkInterfaceWithSubscriptions,
   customResolvers: {
     Query: {
       channel: (_, args) => {
