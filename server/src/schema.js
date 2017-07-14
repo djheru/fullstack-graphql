@@ -33,6 +33,11 @@ type Mutation {
   addChannel(name: String!): Channel
   addMessage(message: MessageInput!): Message
 }
+
+# Subscriptions allow clients to be notified of certain topics
+type Subscription {
+  messageAdded(channelId: ID!): Message
+}
 `;
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 // addMockFunctionsToSchema({ schema });
