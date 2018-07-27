@@ -1,4 +1,4 @@
-# graphql-tutorial
+# graphql tutorial
 Full-stack GraphQL tutorials with React, Redux and Apollo
 
 # 1. The Frontend
@@ -876,7 +876,7 @@ export const messagesSubscription = gql`
 `;
 ```
 
-- Inside `componentWillMount` add the subscription
+- Inside `componentWillMount` add the subscription call
 ```javascript
 componentWillMount() {
     this.props.data.subscribeToMore({
